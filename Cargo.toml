@@ -1,0 +1,23 @@
+[package]
+name = "ethlift"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+toml = "0.5"
+clap = "2.33"
+directories = "4.0"
+serde_yaml = "0.8.7"
+ethers-solc = { git = "https://github.com/gakonst/ethers-rs", default-features = false, features = ["async", "svm-solc"] }
+ethers-etherscan = { git = "https://github.com/gakonst/ethers-rs"}
+ethers-core = { git = "https://github.com/gakonst/ethers-rs"}
+foundry-config = { git = "https://github.com/foundry-rs/foundry"}
+tokio = { version = "1.18", features = ["macros", "rt-multi-thread"] }
+similar = "2.1.0"
+diffy="0.2.2"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "2"
