@@ -43,8 +43,6 @@ See our [contributing guidelines](./CONTRIBUTING.md).
 
 - Open an issue with [the bug](https://github.com/storming0x/ethlift-rs/issues/new)
 
-If you want to contribute, or follow along with contributor discussion, you can use our [main telegram](https://t.me/foundry_rs) to chat with us about the development of Foundry!
-
 ## Acknowledgements
 
 - Foundry and ethers-rs contributors.
