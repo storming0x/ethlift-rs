@@ -28,7 +28,7 @@ You can manually download nightly releases [here](https://github.com/storming0x/
 
 ### Commands
 
-- **ethdiff**
+- **diff**
   - Get a diff of a local solidity file compared against the deployed etherescan verified source code
   - Supports Brownie and foundry projects. TODO: hardhat
 - **TODO flatten** 
