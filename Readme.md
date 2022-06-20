@@ -29,7 +29,7 @@ You can manually download nightly releases [here](https://github.com/storming0x/
 ### Commands
 
 - **diff**
-  - Get a diff of a local solidity file compared against the deployed etherescan verified source code
+  - Get a diff of a local solidity file compared against the deployed etherscan verified source code of a contract address
   - Supports Brownie and foundry projects. TODO: hardhat
 - **TODO flatten** 
   - Generic flattener for solidity contracts to merge imports into a single file
