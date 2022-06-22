@@ -27,6 +27,7 @@ jobs:
           toolchain: nightly-2022-02-15
           target: wasm32-unknown-unknown
           override: true
+          components: rustfmt , clippy
 
       - name: Configure cache
         uses: actions/cache@v2
@@ -98,26 +99,6 @@ jobs:
         with:
           files: ./target/release/ethlift
 
- 
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Set-Up
-        run: sudo apt update -y &&sudo apt install -y git clang curl libssl-dev llvm libudev-dev
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          components: rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
 
   coverage:
     name: Code coverage
