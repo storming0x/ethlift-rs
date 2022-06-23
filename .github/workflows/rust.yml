@@ -1,0 +1,127 @@
+name: Rust
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set-Up
+        run: sudo apt update -y && sudo apt install -y git clang curl libssl-dev llvm libudev-dev make
+
+      - name: Rust toolchain
+        uses: actions-rs/toolchain@v1
+        # TODO: Below can be removed when https://github.com/actions-rs/toolchain/issues/126 is resolved
+        with:
+          toolchain: nightly-2022-02-15
+          target: wasm32-unknown-unknown
+          override: true
+          components: rustfmt , clippy
+
+      - name: Configure cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Cargo Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - name: Cargo Fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+# Current limitation: https://github.com/actions-rs/clippy-check#limitations 
+# TODO: Uncomment Clippy once fork is merg
+      # - uses: actions-rs/clippy-check@v1
+      #   with:
+      #     # token: ${{ secrets.GITHUB_TOKEN }}
+      #     args: -- -D warnings
+
+  build:
+    name: Build
+    permissions:
+      contents: write
+      packages: write
+    needs: test
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Set-Up
+        run: sudo apt update -y && sudo apt install -y git clang curl libssl-dev llvm libudev-dev make
+
+      - name: Rust toolchain
+        uses: actions-rs/toolchain@v1
+        # TODO: Below can be removed when https://github.com/actions-rs/toolchain/issues/126 is resolved
+        with:
+          toolchain: nightly-2022-02-15
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Configure cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build 
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --locked
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ./target/release/ethlift
+
+
+  coverage:
+    name: Code coverage
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set-Up
+        run: sudo apt update -y && sudo apt install -y git clang curl libssl-dev llvm libudev-dev
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2022-02-15
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          args: '--ignore-tests --avoid-cfg-tarpaulin'
+
