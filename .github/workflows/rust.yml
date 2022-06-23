@@ -49,11 +49,11 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
-
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # args: -- -D warnings
+#  TODO: see https://github.com/actions-rs/clippy-check#limitations 
+      # - uses: actions-rs/clippy-check@v1
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     # args: -- -D warnings
 
   build:
     name: Build
