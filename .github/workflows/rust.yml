@@ -110,7 +110,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          repository: substrate-developer-hub/substrate-node-template
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install nightly toolchain
