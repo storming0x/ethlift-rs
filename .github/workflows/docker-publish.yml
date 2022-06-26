@@ -74,6 +74,11 @@ jobs:
         env:
           OWNER: '${{ github.repository_owner }}'
 
+      - name: PrepareReg Names
+        run: |
+          echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+          echo IMAGE_TAG=$(echo ${{ github.ref }} | tr '[:upper:]' '[:lower:]' | awk '{split($0,a,"/"); print a[3]}') >> $GITHUB_ENV
+
       # Build and push Docker image
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
