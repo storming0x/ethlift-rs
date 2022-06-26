@@ -44,6 +44,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: PrepareReg Names
+        run: |
+          echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+          # echo IMAGE_TAG=$(echo ${{ github.ref }} | tr '[:upper:]' '[:lower:]' | awk '{split($0,a,"/"); print a[3]}') >> $GITHUB_ENV
+
       # Creates an additional 'latest' or 'nightly' tag
       # If the job is triggered via cron schedule, tag nightly and nightly-{SHA}
       # If the job is triggered via workflow dispatch and on a master branch, tag branch and latest
@@ -53,13 +58,13 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == 'schedule' ]]; then
             echo "cron trigger, assigning nightly tag"
-            echo "::set-output name=docker_tags::${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:nightly,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:nightly-${GITHUB_SHA}"
+            echo "::set-output name=docker_tags::${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}:nightly,${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}:nightly-${GITHUB_SHA}"
           elif [[ "${GITHUB_REF##*/}" == "main" ]] || [[ ${GITHUB_REF##*/} == "master" ]]; then
             echo "manual trigger from master/main branch, assigning latest tag"
-            echo "::set-output name=docker_tags::${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF##*/},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            echo "::set-output name=docker_tags::${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF##*/},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
           else
             echo "Neither scheduled nor manual release from main branch. Just tagging as branch name"
-            echo "::set-output name=docker_tags::${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF##*/}"
+            echo "::set-output name=docker_tags::${{ env.IMAGE_REPOSITORY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF##*/}"
           fi
 
       # Log docker metadata to explicitly know what is being pushed
@@ -74,10 +79,10 @@ jobs:
         env:
           OWNER: '${{ github.repository_owner }}'
 
-      - name: PrepareReg Names
-        run: |
-          echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
-          # echo IMAGE_TAG=$(echo ${{ github.ref }} | tr '[:upper:]' '[:lower:]' | awk '{split($0,a,"/"); print a[3]}') >> $GITHUB_ENV
+      # - name: PrepareReg Names
+      #   run: |
+      #     echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+      #     # echo IMAGE_TAG=$(echo ${{ github.ref }} | tr '[:upper:]' '[:lower:]' | awk '{split($0,a,"/"); print a[3]}') >> $GITHUB_ENV
 
       # - id: read-docker-image-identifiers
       #   name: Read Docker Image Identifiers
@@ -92,6 +97,6 @@ jobs:
           context: .
           push: true
           tags: |
-           ${{ steps.docker_tagging.outputs.docker_tags }}
+            ${{ steps.docker_tagging.outputs.docker_tags }}
             ghcr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.tagger.outputs.image_tag }}
           labels: ${{ steps.meta.outputs.labels }}
