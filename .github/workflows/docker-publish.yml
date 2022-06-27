@@ -97,6 +97,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.docker_tagging.outputs.docker_tags }}
             ghcr.io/${{ env.IMAGE_REPOSITORY }}:${{ steps.tagger.outputs.image_tag }}
           # labels: ${{ steps.meta.outputs.labels }}
