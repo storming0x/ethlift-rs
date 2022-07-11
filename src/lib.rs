@@ -5,6 +5,7 @@ use ethers_core::types::Chain;
 use ethers_etherscan::Client;
 use ethers_solc::{remappings::Remapping, ProjectPathsConfig};
 use foundry_config::load_config;
+use serde_yaml;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 
@@ -86,12 +87,13 @@ pub fn get_args() -> MyResult<UtilsConfig> {
             let file_path = matches.value_of("file_path").unwrap();
             let contract_address = matches.value_of("address").unwrap();
 
-            let config_file_path =
-                if let Some(tmp_config_file_path) = matches.value_of("config_file_path") {
-                    tmp_config_file_path.to_string()
-                } else {
-                    detect_config_file_path()
-                };
+            let config_file_path;
+
+            if let Some(tmp_config_file_path) = matches.value_of("config_file_path") {
+                config_file_path = tmp_config_file_path.to_string();
+            } else {
+                config_file_path = detect_config_file_path();
+            }
 
             let chain_id = matches
                 .value_of("chain")
@@ -129,14 +131,15 @@ pub fn run(config: UtilsConfig) -> MyResult<()> {
 }
 
 fn extract_remappings(config_file_path: &str) -> MyResult<Vec<Remapping>> {
-    let mapped_remappings = if config_file_path.contains("brownie-config") {
+    let mapped_remappings;
+    if config_file_path.contains("brownie-config") {
         let remappings = extract_brownie_config_remappings_yaml(config_file_path)?;
-        convert_brownie_to_forge_remappings(&remappings)?
+        mapped_remappings = convert_brownie_to_forge_remappings(&remappings)?;
     } else {
         // foundry path
         let foundry_cfg = load_config();
-        foundry_cfg.get_all_remappings()
-    };
+        mapped_remappings = foundry_cfg.get_all_remappings();
+    }
     Ok(mapped_remappings)
 }
 
@@ -154,17 +157,17 @@ fn detect_config_file_path() -> String {
         .join(Path::new("brownie-config.yml"))
         .exists()
     {
-        current_dir_path
+        return current_dir_path
             .join(PathBuf::from("brownie-config.yml"))
             .into_os_string()
             .into_string()
-            .unwrap()
+            .unwrap();
     } else {
-        current_dir_path
+        return current_dir_path
             .join(PathBuf::from("foundry.toml"))
             .into_os_string()
             .into_string()
-            .unwrap()
+            .unwrap();
     }
 }
 
@@ -213,26 +216,30 @@ fn convert_brownie_to_forge_remappings(remappings: &[String]) -> MyResult<Vec<Re
 }
 
 fn parse_brownie_remapping(brownie_remapping: &str) -> MyResult<(String, String, String)> {
-    let mut vec = brownie_remapping.split('=');
+    let mut vec = brownie_remapping.split("=");
 
     assert!(vec.clone().count() == 2);
 
-    let import_name = vec.next().unwrap();
-    let mut lib_path_split = vec.last().unwrap().split('@');
+    let import_name = vec.nth(0).unwrap();
+    let mut lib_path_split = vec.last().unwrap().split("@");
 
     assert!(lib_path_split.clone().count() == 2);
 
-    let lib_name_split = lib_path_split.clone().next().unwrap().split('/');
+    let lib_name_split = lib_path_split.clone().nth(0).unwrap().split("/");
     assert!(lib_name_split.clone().count() == 2);
     let lib_name = lib_name_split.last().unwrap();
 
     let lib_path = format!(
         "{}@{}",
-        lib_path_split.next().unwrap(),
+        lib_path_split.nth(0).unwrap(),
         lib_path_split.last().unwrap()
     );
 
-    Ok((import_name.to_string(), lib_name.to_string(), lib_path))
+    Ok((
+        import_name.to_string(),
+        lib_name.to_string(),
+        lib_path.to_string(),
+    ))
 }
 
 // TODO add command for porting configs
