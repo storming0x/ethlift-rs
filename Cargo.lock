@@ -728,7 +728,7 @@ dependencies = [
 
 [[package]]
 name = "ethlift"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "clap 2.34.0",
