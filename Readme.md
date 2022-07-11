@@ -20,8 +20,6 @@ Or via `cargo install --git https://github.com/storming0x/ethlift-rs --locked et
 
 ### Manual Download
 
-TODO:
-
 You can manually download nightly releases [here](https://github.com/storming0x/ethlift-rs/releases).
 
 ## ethlift
