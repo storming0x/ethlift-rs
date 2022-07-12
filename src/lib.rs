@@ -10,13 +10,13 @@ use std::path::{Path, PathBuf};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UtilsConfig {
-    etherscan_token: String,
-    contract_address: String,
-    chain_id: u64,
+    etherscan_token: Option<String>,
+    contract_address: Option<String>,
+    chain_id: Option<u64>,
     src: String,
-    remappings: Vec<Remapping>,
+    remappings: Option<Vec<Remapping>>,
     file_path: String,
     color_output: bool,
 }
@@ -77,10 +77,37 @@ pub fn get_args() -> MyResult<UtilsConfig> {
                         .help("Config file path for your project"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("flatten")
+                .about("flatten local solidity file")
+                .arg(
+                    Arg::with_name("src")
+                        .short("s")
+                        .long("source_code_path")
+                        .value_name("SRC")
+                        .required(true)
+                        .help("Source code folder path"),
+                )
+                .arg(
+                    Arg::with_name("file_path")
+                        .short("f")
+                        .long("file_path")
+                        .value_name("FILE_PATH")
+                        .required(true)
+                        .help("Smart contract .sol file path"),
+                )
+                .arg(
+                    Arg::with_name("config_file_path")
+                        .short("c")
+                        .long("config_path")
+                        .value_name("CONFIG_PATH")
+                        .help("Config file path for your project"),
+                ),
+        )
         .get_matches();
 
-    match app_matches.subcommand_matches("ethdiff") {
-        Some(matches) => {
+    match app_matches.subcommand() {
+        ("diff", Some(matches)) => {
             let etherscan_token = matches.value_of("etherscan_token").unwrap();
             let source_code_path = matches.value_of("src").unwrap();
             let file_path = matches.value_of("file_path").unwrap();
@@ -102,12 +129,25 @@ pub fn get_args() -> MyResult<UtilsConfig> {
             let mapped_remappings = extract_remappings(&config_file_path)?;
             Ok(UtilsConfig {
                 file_path: file_path.to_string(),
-                chain_id: chain_id.unwrap(),
-                etherscan_token: etherscan_token.to_string(),
+                chain_id: Some(chain_id.unwrap()),
+                etherscan_token: Some(etherscan_token.to_string()),
                 src: source_code_path.to_string(),
-                remappings: mapped_remappings,
-                contract_address: contract_address.to_string(),
+                remappings: Some(mapped_remappings),
+                contract_address: Some(contract_address.to_string()),
                 color_output: true,
+            })
+        }
+        ("flatten", Some(matches)) => {
+            let source_code_path = matches.value_of("src").unwrap();
+            let file_path = matches.value_of("file_path").unwrap();
+            Ok(UtilsConfig {
+                file_path: file_path.to_string(),
+                src: source_code_path.to_string(),
+                color_output: true,
+                etherscan_token: None,
+                contract_address: None,
+                chain_id: None,
+                remappings: None,
             })
         }
         _ => Err(From::from("unrecognized command")),
@@ -118,9 +158,15 @@ pub fn run(config: UtilsConfig) -> MyResult<()> {
     let flattened_file = flatten_file(&config.file_path, &config);
 
     let etherscan_source_code = get_contract_source_code_etherscan(
-        &config.contract_address,
-        &config.etherscan_token,
-        config.chain_id,
+        &config
+            .contract_address
+            .as_ref()
+            .expect("Unable to parse contract address"),
+        &config
+            .etherscan_token
+            .as_ref()
+            .expect("Unable to parse API key"),
+        config.chain_id.expect("Unable to parse chain ID"),
     )
     .unwrap();
     // create compare diff from flattened_file
@@ -283,7 +329,7 @@ fn flatten_file(target: &str, config: &UtilsConfig) -> MyResult<String> {
 fn create_project_config(config: &UtilsConfig) -> MyResult<ProjectPathsConfig> {
     match ProjectPathsConfig::builder()
         .sources(&config.src)
-        .remappings(config.remappings.clone())
+        .remappings(config.remappings.clone().unwrap())
         .root(std::env::current_dir().unwrap())
         .build()
     {
